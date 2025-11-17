@@ -1,7 +1,31 @@
+from typing import TypedDict
+
 from httpx import Response
 
 from clients.http.client import HTTPClient
 from clients.http.gateway.client import build_gateway_http_client  # Импортируем builder
+
+
+class DocumentDict(TypedDict):
+    """
+    Структура документа.
+    """
+    url: str
+    document: str
+
+
+class GetTariffDocumentResponseDict(TypedDict):
+    """
+    Структура ответа получения документа тарифа.
+    """
+    tariff: DocumentDict
+
+
+class GetContractDocumentResponseDict(TypedDict):
+    """
+    Структура ответа получения документа контракта.
+    """
+    contract: DocumentDict
 
 
 class DocumentsGatewayHTTPClient(HTTPClient):
@@ -11,7 +35,7 @@ class DocumentsGatewayHTTPClient(HTTPClient):
 
     def get_tariff_document_api(self, account_id: str) -> Response:
         """
-        Получить тарифа по счету.
+        Получить документа тарифа по счету (низкоуровневый метод).
 
         :param account_id: Идентификатор счета.
         :return: Ответ от сервера (объект httpx.Response).
@@ -20,15 +44,36 @@ class DocumentsGatewayHTTPClient(HTTPClient):
 
     def get_contract_document_api(self, account_id: str) -> Response:
         """
-        Получить контракта по счету.
+        Получить документа контракта по счету (низкоуровневый метод).
 
         :param account_id: Идентификатор счета.
         :return: Ответ от сервера (объект httpx.Response).
         """
         return self.get(f"/api/v1/documents/contract-document/{account_id}")
 
+    # --- Высокоуровневые методы ---
 
-# Добавляем builder для DocumentsGatewayHTTPClient
+    def get_tariff_document(self, account_id: str) -> GetTariffDocumentResponseDict:
+        """
+        Высокоуровневый метод получения документа тарифа по счёту.
+
+        :param account_id: Идентификатор счёта.
+        :return: Словарь с данными документа тарифа.
+        """
+        response = self.get_tariff_document_api(account_id)
+        return response.json()
+
+    def get_contract_document(self, account_id: str) -> GetContractDocumentResponseDict:
+        """
+        Высокоуровневый метод получения документа контракта по счёту.
+
+        :param account_id: Идентификатор счёта.
+        :return: Словарь с данными документа контракта.
+        """
+        response = self.get_contract_document_api(account_id)
+        return response.json()
+
+
 def build_documents_gateway_http_client() -> DocumentsGatewayHTTPClient:
     """
     Функция создаёт экземпляр DocumentsGatewayHTTPClient с уже настроенным HTTP-клиентом.
