@@ -3,6 +3,8 @@ from enum import Enum
 
 from pydantic import BaseModel, Field, HttpUrl, ConfigDict
 
+from tools.fakers import fake
+
 
 class BaseSchema(BaseModel):
     """
@@ -26,9 +28,7 @@ class OperationType(str, Enum):
 class OperationStatus(str, Enum):
     COMPLETED = "COMPLETED"
     FAILED = "FAILED"
-    # при желании можно добавить другие, если есть в API:
-    # PENDING = "PENDING"
-    # IN_PROGRESS = "IN_PROGRESS"
+    # при необходимости можно добавить другие статусы
 
 
 # === Основные сущности ===
@@ -116,8 +116,10 @@ class MakeOperationRequestSchema(BaseSchema):
     """
     Базовая структура тела запроса для создания финансовой операции.
     """
-    status: OperationStatus
-    amount: float
+    # Автоматическая генерация статуса и суммы
+    status: OperationStatus = Field(default_factory=lambda: fake.enum(OperationStatus))
+    amount: float = Field(default_factory=fake.amount)
+
     card_id: str = Field(alias="cardId")
     account_id: str = Field(alias="accountId")
 
@@ -157,7 +159,7 @@ class MakePurchaseOperationRequestSchema(MakeOperationRequestSchema):
     Дополнительное поле:
     - category: категория покупки.
     """
-    category: str
+    category: str = Field(default_factory=fake.category)
 
 
 class MakeBillPaymentOperationRequestSchema(MakeOperationRequestSchema):
