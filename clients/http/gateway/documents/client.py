@@ -1,6 +1,12 @@
 from httpx import Response
+from locust.env import Environment
 
-from clients.http.client import HTTPClient
+from clients.http.gateway.client import (
+    build_gateway_http_client,
+    build_gateway_locust_http_client,
+)
+
+from clients.http.client import HTTPClient, HTTPClientExtensions
 from clients.http.gateway.client import build_gateway_http_client
 from clients.http.gateway.documents.schema import (
     GetTariffDocumentResponseSchema,
@@ -13,25 +19,31 @@ class DocumentsGatewayHTTPClient(HTTPClient):
     Клиент для взаимодействия с /api/v1/documents сервиса http-gateway.
     """
 
-    # --- Низкоуровневые методы (работают с httpx.Response) ---
-
     def get_tariff_document_api(self, account_id: str) -> Response:
         """
-        Получить документ тарифа по счету (низкоуровневый метод).
+        Получить тарифа по счету.
 
         :param account_id: Идентификатор счета.
         :return: Ответ от сервера (объект httpx.Response).
         """
-        return self.get(f"/api/v1/documents/tariff-document/{account_id}")
+        return self.get(
+            f"/api/v1/documents/tariff-document/{account_id}",
+            # Явно передаём логическое имя маршрута
+            extensions=HTTPClientExtensions(route="/api/v1/documents/tariff-document/{account_id}")
+        )
 
     def get_contract_document_api(self, account_id: str) -> Response:
         """
-        Получить документ контракта по счету (низкоуровневый метод).
+        Получить контракта по счету.
 
         :param account_id: Идентификатор счета.
         :return: Ответ от сервера (объект httpx.Response).
         """
-        return self.get(f"/api/v1/documents/contract-document/{account_id}")
+        return self.get(
+            f"/api/v1/documents/contract-document/{account_id}",
+            # Явно передаём логическое имя маршрута
+            extensions=HTTPClientExtensions(route="/api/v1/documents/contract-document/{account_id}")
+        )
 
     # --- Высокоуровневые методы (возвращают Pydantic-модели) ---
 
@@ -64,3 +76,18 @@ def build_documents_gateway_http_client() -> DocumentsGatewayHTTPClient:
     :return: Готовый к использованию DocumentsGatewayHTTPClient.
     """
     return DocumentsGatewayHTTPClient(client=build_gateway_http_client())
+
+def build_documents_gateway_locust_http_client(environment: Environment) -> DocumentsGatewayHTTPClient:
+    """
+    Функция создаёт экземпляр DocumentsGatewayHTTPClient для нагрузочных тестов Locust.
+
+    Использует Locust-совместимый HTTP-клиент, созданный через
+    build_gateway_locust_http_client(environment).
+
+    :param environment: Locust Environment (host, events и т.д.).
+    :return: Готовый к использованию DocumentsGatewayHTTPClient.
+    """
+    return DocumentsGatewayHTTPClient(
+        client=build_gateway_locust_http_client(environment)
+    )
+
